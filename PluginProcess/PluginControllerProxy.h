@@ -62,8 +62,8 @@ public:
     bool initialize(const PluginCreationParameters&);
     void destroy();
 
-    void didReceivePluginControllerProxyMessage(IPC::Connection*, IPC::MessageDecoder&);
-    void didReceiveSyncPluginControllerProxyMessage(IPC::Connection*, IPC::MessageDecoder&, std::unique_ptr<IPC::MessageEncoder>&);
+    void didReceivePluginControllerProxyMessage(IPC::Connection&, IPC::MessageDecoder&);
+    void didReceiveSyncPluginControllerProxyMessage(IPC::Connection&, IPC::MessageDecoder&, std::unique_ptr<IPC::MessageEncoder>&);
 
     bool wantsWheelEvents() const;
 
@@ -83,7 +83,6 @@ private:
     void paint();
 
     // PluginController
-    virtual bool isPluginVisible() override;
     virtual void invalidate(const WebCore::IntRect&) override;
     virtual String userAgent() override;
     virtual void loadURL(uint64_t requestID, const String& method, const String& urlString, const String& target, const WebCore::HTTPHeaderMap& headerFields, const Vector<uint8_t>& httpBody, bool allowPopups) override;
@@ -92,17 +91,17 @@ private:
     virtual NPObject* windowScriptNPObject() override;
     virtual NPObject* pluginElementNPObject() override;
     virtual bool evaluate(NPObject*, const String& scriptString, NPVariant* result, bool allowPopups) override;
+    virtual void setPluginIsPlayingAudio(bool) override;
     virtual void setStatusbarText(const String&) override;
     virtual bool isAcceleratedCompositingEnabled() override;
     virtual void pluginProcessCrashed() override;
-    virtual void willSendEventToPlugin() override;
     virtual void didInitializePlugin() override;
     virtual void didFailToInitializePlugin() override;
 
 #if PLATFORM(COCOA)
     virtual void pluginFocusOrWindowFocusChanged(bool) override;
     virtual void setComplexTextInputState(PluginComplexTextInputState) override;
-    virtual mach_port_t compositingRenderServerPort() override;
+    virtual const WebCore::MachSendRight& compositingRenderServerPort() override;
     virtual void openPluginPreferencePane() override;
 #endif
 
@@ -111,6 +110,7 @@ private:
     virtual String cookiesForURL(const String&) override;
     virtual void setCookiesForURL(const String& urlString, const String& cookieString) override;
     virtual bool isPrivateBrowsingEnabled() override;
+    virtual bool isMuted() const override { return m_isMuted; }
     virtual bool getAuthenticationInfo(const WebCore::ProtectionSpace&, String& username, String& password) override;
     virtual void protectPluginFromDestruction() override;
     virtual void unprotectPluginFromDestruction() override;
@@ -163,6 +163,7 @@ private:
 
     void storageBlockingStateChanged(bool);
     void privateBrowsingStateChanged(bool);
+    void mutedStateChanged(bool);
     void getFormValue(bool& returnValue, String& formValue);
 
     void platformInitialize(const PluginCreationParameters&);
@@ -175,6 +176,7 @@ private:
     String m_userAgent;
     bool m_storageBlockingEnabled;
     bool m_isPrivateBrowsingEnabled;
+    bool m_isMuted;
     bool m_isAcceleratedCompositingEnabled;
     bool m_isInitializing;
     bool m_isVisible;
